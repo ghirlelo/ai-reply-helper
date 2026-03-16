@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>AI Reply Helper</title>
 <style>
+  /* Body with dark gradient */
   body {
     margin:0;
     padding:0;
@@ -13,15 +14,24 @@
     align-items:center;
     min-height:100vh;
     background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-    color:white;
     overflow:hidden;
+    color:white;
+  }
+
+  /* Floating orbs canvas */
+  #bgCanvas {
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    z-index:-1;
   }
 
   h1 {
     margin:20px 0;
     font-size:32px;
     letter-spacing:1px;
-    color:#f0f0f0;
     text-shadow: 0 0 12px rgba(255,255,255,0.3);
   }
 
@@ -42,10 +52,6 @@
     resize:none;
     transition:0.2s;
   }
-  textarea:focus {
-    background: rgba(255,255,255,0.08);
-    box-shadow:0 6px 24px rgba(0,0,0,0.6);
-  }
 
   button {
     padding:12px 24px;
@@ -62,20 +68,10 @@
     box-shadow:0 4px 20px rgba(0,255,255,0.5);
   }
 
-  select {
-    padding:6px 12px;
-    border-radius:30px;
-    border:none;
-    background: rgba(255,255,255,0.05);
-    color:white;
-    margin:5px;
-    font-weight:bold;
-  }
-
   #answers {
     width:90%;
     max-width:450px;
-    height:450px;
+    height:400px;
     overflow-y:auto;
     display:flex;
     flex-direction:column;
@@ -117,64 +113,78 @@
     box-shadow:0 4px 12px rgba(0,255,255,0.2);
   }
 
-  .typing {
-    width:40px;
-    height:6px;
-    border-radius:3px;
-    background:#22d3ee;
-    animation: blink 1s infinite alternate;
-  }
-
-  @keyframes blink {
-    0%{opacity:0.2;}
-    100%{opacity:1;}
-  }
-
-  .copy-btn {
-    position:absolute;
-    top:4px;
-    right:6px;
-    font-size:12px;
-    background: #4ade80;
-    border:none;
-    border-radius:6px;
-    padding:2px 6px;
-    cursor:pointer;
-    transition:0.2s;
-  }
-  .copy-btn:hover {
-    background:#22d3ee;
-  }
-
-  ::-webkit-scrollbar {
-    width:6px;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.3);
-    border-radius:3px;
-  }
 </style>
 </head>
 <body>
 
+<canvas id="bgCanvas"></canvas>
+
 <h1>AI Reply Helper</h1>
 
 <textarea id="message" placeholder="Type your message..."></textarea>
-<br>
-<select id="tone">
-  <option value="friendly">Friendly</option>
-  <option value="formal">Formal</option>
-  <option value="funny">Funny</option>
-</select>
 <br>
 <button onclick="generateReply()">Send</button>
 
 <div id="answers"></div>
 
 <script>
+/* ---------------- Floating Background ---------------- */
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+let width = canvas.width = window.innerWidth;
+let height = canvas.height = window.innerHeight;
+
+const orbs = [];
+const orbCount = 40;
+
+class Orb {
+  constructor() {
+    this.reset();
+  }
+  reset() {
+    this.x = Math.random()*width;
+    this.y = Math.random()*height;
+    this.radius = Math.random()*6 + 2;
+    this.vx = (Math.random()-0.5)*0.5;
+    this.vy = (Math.random()-0.5)*0.5;
+    this.alpha = Math.random()*0.5 + 0.2;
+    this.color = `rgba(34, 211, 238, ${this.alpha})`;
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    if(this.x < 0 || this.x > width || this.y < 0 || this.y > height){
+      this.reset();
+    }
+    this.draw();
+  }
+}
+
+for(let i=0;i<orbCount;i++){
+  orbs.push(new Orb());
+}
+
+function animate(){
+  ctx.clearRect(0,0,width,height);
+  orbs.forEach(o=>o.update());
+  requestAnimationFrame(animate);
+}
+animate();
+
+window.addEventListener('resize', ()=>{
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
+});
+
+/* ---------------- Chat Logic ---------------- */
 async function generateReply() {
   const message = document.getElementById("message").value.trim();
-  const tone = document.getElementById("tone")?.value || "friendly";
   const answers = document.getElementById("answers");
 
   if (!message) return alert("Please enter a message!");
@@ -188,44 +198,27 @@ async function generateReply() {
   // AI typing bubble
   const aiBubble = document.createElement("div");
   aiBubble.className = "bubble ai";
-  const typingDiv = document.createElement("div");
-  typingDiv.className = "typing";
-  aiBubble.appendChild(typingDiv);
+  aiBubble.textContent = "AI is typing...";
   answers.appendChild(aiBubble);
 
   answers.scrollTop = answers.scrollHeight;
 
-  try {
-    const res = await fetch("/api/reply", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({message,tone})
-    });
-
-    const data = await res.json();
-
-    // Remove typing and show AI replies
-    aiBubble.innerHTML = "";
-    const replies = data.reply.split("\n").filter(r=>r.trim()!=="");
+  // Fake AI reply for demo
+  setTimeout(()=>{
+    aiBubble.textContent = "";
+    const replies = [
+      "Bas kat rahi hai",
+      "Jese tese. Tum sunao",
+      "Koi udhaar toh nahi maangna?"
+    ];
     replies.forEach(r=>{
       const b = document.createElement("div");
       b.className = "bubble ai";
       b.textContent = r;
-
-      const copyBtn = document.createElement("button");
-      copyBtn.className = "copy-btn";
-      copyBtn.textContent = "Copy";
-      copyBtn.onclick = ()=>navigator.clipboard.writeText(r);
-      b.appendChild(copyBtn);
-
       answers.appendChild(b);
     });
-
     answers.scrollTop = answers.scrollHeight;
-
-  } catch(err) {
-    aiBubble.textContent = "Something went wrong: "+err.message;
-  }
+  },1000);
 
   document.getElementById("message").value="";
 }
