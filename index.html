@@ -2,146 +2,237 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>AI Reply Helper</title>
+<title>Reply Helper AI</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <style>
 
+*{
+box-sizing:border-box;
+}
+
 body{
 margin:0;
-font-family:Segoe UI;
-background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);
-color:white;
-display:flex;
-flex-direction:column;
-align-items:center;
+font-family:Inter;
 height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:radial-gradient(circle at 20% 20%,#1a1a2e,#09090f);
+overflow:hidden;
+color:white;
 }
 
-h1{
-margin-top:20px;
-font-weight:500;
+/* animated background glow */
+
+body::before{
+content:"";
+position:absolute;
+width:800px;
+height:800px;
+background:radial-gradient(circle,#22d3ee55,transparent 60%);
+top:-200px;
+left:-200px;
+animation:float 10s infinite alternate;
 }
+
+body::after{
+content:"";
+position:absolute;
+width:700px;
+height:700px;
+background:radial-gradient(circle,#a78bfa55,transparent 60%);
+bottom:-200px;
+right:-200px;
+animation:float2 12s infinite alternate;
+}
+
+@keyframes float{
+from{transform:translate(0,0)}
+to{transform:translate(100px,60px)}
+}
+
+@keyframes float2{
+from{transform:translate(0,0)}
+to{transform:translate(-100px,-80px)}
+}
+
+/* main container */
+
+.app{
+width:420px;
+height:650px;
+backdrop-filter:blur(25px);
+background:rgba(255,255,255,0.05);
+border-radius:30px;
+border:1px solid rgba(255,255,255,0.1);
+display:flex;
+flex-direction:column;
+overflow:hidden;
+box-shadow:
+0 0 40px rgba(0,0,0,0.6),
+0 0 60px rgba(34,211,238,0.2);
+}
+
+/* header */
+
+.header{
+padding:18px;
+text-align:center;
+font-size:18px;
+font-weight:500;
+border-bottom:1px solid rgba(255,255,255,0.08);
+letter-spacing:0.5px;
+}
+
+/* chat */
 
 #chat{
-width:90%;
-max-width:450px;
-height:60vh;
+flex:1;
 overflow-y:auto;
-background:rgba(255,255,255,0.05);
-backdrop-filter:blur(10px);
-border-radius:20px;
-padding:15px;
-margin-top:20px;
+padding:20px;
 display:flex;
 flex-direction:column;
-gap:10px;
+gap:12px;
+scroll-behavior:smooth;
 }
+
+/* bubbles */
 
 .bubble{
-padding:12px 16px;
-border-radius:20px;
 max-width:75%;
-animation:fade .2s ease;
+padding:12px 16px;
+border-radius:18px;
+font-size:14px;
+line-height:1.4;
 position:relative;
+animation:pop .2s ease;
 }
 
-@keyframes fade{
-from{opacity:0;transform:translateY(5px)}
-to{opacity:1}
+@keyframes pop{
+from{transform:scale(.9);opacity:0}
+to{transform:scale(1);opacity:1}
 }
 
 .user{
+align-self:flex-end;
 background:linear-gradient(135deg,#22d3ee,#4ade80);
 color:black;
-align-self:flex-end;
 }
 
 .ai{
-background:rgba(255,255,255,0.1);
 align-self:flex-start;
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(10px);
+border:1px solid rgba(255,255,255,0.1);
 }
+
+/* copy button */
 
 .copy{
 position:absolute;
 top:4px;
 right:6px;
-font-size:11px;
-cursor:pointer;
-background:#22d3ee;
+font-size:10px;
 border:none;
+background:#22d3ee;
+color:black;
 border-radius:6px;
 padding:2px 6px;
+cursor:pointer;
+opacity:0;
+transition:.2s;
 }
 
-#inputBox{
-margin-top:15px;
+.bubble:hover .copy{
+opacity:1;
+}
+
+/* input */
+
+.inputArea{
+padding:15px;
+border-top:1px solid rgba(255,255,255,0.08);
 display:flex;
 flex-direction:column;
-align-items:center;
+gap:10px;
 }
 
 textarea{
-width:90%;
-max-width:450px;
-height:60px;
-border-radius:30px;
+width:100%;
+height:55px;
+border-radius:25px;
 border:none;
 padding:12px;
-font-size:15px;
-background:rgba(255,255,255,0.08);
-color:white;
+font-family:Inter;
 resize:none;
 outline:none;
+background:rgba(255,255,255,0.08);
+color:white;
 }
 
 .controls{
-margin-top:10px;
-}
-
-button{
-padding:10px 20px;
-border:none;
-border-radius:25px;
-background:linear-gradient(135deg,#4ade80,#22d3ee);
-cursor:pointer;
-font-weight:bold;
+display:flex;
+justify-content:space-between;
+align-items:center;
 }
 
 select{
+background:rgba(255,255,255,0.1);
+border:none;
+color:white;
 border-radius:20px;
 padding:5px 10px;
-border:none;
-margin-right:5px;
 }
 
-#quickReplies{
-margin-top:10px;
+button{
+background:linear-gradient(135deg,#22d3ee,#4ade80);
+border:none;
+padding:8px 18px;
+border-radius:20px;
+cursor:pointer;
+font-weight:500;
+}
+
+/* quick replies */
+
+#quick{
 display:flex;
 flex-wrap:wrap;
 gap:6px;
-justify-content:center;
+margin-top:5px;
 }
 
-.quick{
-background:rgba(255,255,255,0.1);
+.quickBtn{
+background:rgba(255,255,255,0.08);
 border:none;
-padding:6px 10px;
-border-radius:15px;
+border-radius:14px;
+padding:5px 10px;
+font-size:12px;
 cursor:pointer;
 color:white;
+transition:.2s;
 }
 
-.typing{
-width:35px;
-height:6px;
+.quickBtn:hover{
 background:#22d3ee;
-border-radius:3px;
+color:black;
+}
+
+/* typing indicator */
+
+.typing{
+width:40px;
+height:8px;
+border-radius:4px;
+background:#22d3ee;
 animation:blink 1s infinite alternate;
 }
 
 @keyframes blink{
-0%{opacity:0.2}
-100%{opacity:1}
+from{opacity:.3}
+to{opacity:1}
 }
 
 </style>
@@ -149,13 +240,17 @@ animation:blink 1s infinite alternate;
 
 <body>
 
-<h1>AI Reply Helper</h1>
+<div class="app">
+
+<div class="header">
+Reply Helper AI
+</div>
 
 <div id="chat"></div>
 
-<div id="inputBox">
+<div class="inputArea">
 
-<textarea id="message" placeholder="Type message..."></textarea>
+<textarea id="message" placeholder="Type a message..."></textarea>
 
 <div class="controls">
 <select id="tone">
@@ -167,7 +262,9 @@ animation:blink 1s infinite alternate;
 <button onclick="generateReply()">Send</button>
 </div>
 
-<div id="quickReplies"></div>
+<div id="quick"></div>
+
+</div>
 
 </div>
 
@@ -175,23 +272,20 @@ animation:blink 1s infinite alternate;
 
 const chat=document.getElementById("chat")
 
-// load history
-chat.innerHTML=localStorage.getItem("chatHistory") || ""
+chat.innerHTML=localStorage.getItem("history") || ""
 
 async function generateReply(){
 
-const message=document.getElementById("message").value.trim()
+const msg=document.getElementById("message").value.trim()
 const tone=document.getElementById("tone").value
 
-if(!message) return
+if(!msg) return
 
-// user bubble
 const user=document.createElement("div")
 user.className="bubble user"
-user.textContent=message
+user.textContent=msg
 chat.appendChild(user)
 
-// typing
 const typing=document.createElement("div")
 typing.className="bubble ai"
 typing.innerHTML='<div class="typing"></div>'
@@ -204,7 +298,7 @@ try{
 const res=await fetch("/api/reply",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body:JSON.stringify({message,tone})
+body:JSON.stringify({message:msg,tone})
 })
 
 const data=await res.json()
@@ -213,7 +307,7 @@ typing.remove()
 
 const replies=data.reply.split("\n").filter(r=>r.trim()!="")
 
-showQuickReplies(replies)
+showQuick(replies)
 
 replies.forEach(r=>{
 
@@ -234,27 +328,25 @@ chat.appendChild(b)
 
 chat.scrollTop=chat.scrollHeight
 
-localStorage.setItem("chatHistory",chat.innerHTML)
+localStorage.setItem("history",chat.innerHTML)
 
 }catch(e){
-
-typing.textContent="Error getting reply"
-
+typing.textContent="AI error"
 }
 
 document.getElementById("message").value=""
 
 }
 
-function showQuickReplies(list){
+function showQuick(list){
 
-const box=document.getElementById("quickReplies")
+const box=document.getElementById("quick")
 box.innerHTML=""
 
 list.forEach(r=>{
 
 const btn=document.createElement("button")
-btn.className="quick"
+btn.className="quickBtn"
 btn.textContent=r
 btn.onclick=()=>navigator.clipboard.writeText(r)
 
@@ -264,7 +356,6 @@ box.appendChild(btn)
 
 }
 
-// enter key send
 document.getElementById("message").addEventListener("keypress",e=>{
 if(e.key==="Enter"){
 e.preventDefault()
