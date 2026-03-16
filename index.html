@@ -4,118 +4,130 @@
 <meta charset="UTF-8">
 <title>AI Reply Helper</title>
 <style>
-  /* Body background */
   body {
-    background: linear-gradient(135deg, #1a1a1a, #0d0d0d);
-    font-family: "Segoe UI", sans-serif;
+    margin:0;
+    padding:0;
+    font-family:"Segoe UI", sans-serif;
     display:flex;
     flex-direction:column;
     align-items:center;
-    padding:20px;
-    color:white;
     min-height:100vh;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    color:white;
+    overflow:hidden;
   }
 
   h1 {
-    font-weight: 500;
-    font-size: 28px;
-    margin-bottom:20px;
+    margin:20px 0;
+    font-size:32px;
+    letter-spacing:1px;
     color:#f0f0f0;
-    text-shadow:0 0 8px rgba(255,255,255,0.2);
+    text-shadow: 0 0 12px rgba(255,255,255,0.3);
   }
 
   textarea {
     width:90%;
-    max-width:400px;
-    height:80px;
-    padding:12px;
+    max-width:450px;
+    height:70px;
+    padding:14px;
     font-size:16px;
-    border-radius:16px;
+    border-radius:50px;
     border:none;
-    background: rgba(255,255,255,0.1);
-    color:white;
-    backdrop-filter: blur(10px);
     outline:none;
+    background: rgba(255,255,255,0.05);
+    color:white;
+    backdrop-filter: blur(8px);
+    box-shadow:0 4px 20px rgba(0,0,0,0.5);
     margin-bottom:10px;
+    resize:none;
+    transition:0.2s;
   }
-
-  select, button {
-    padding:8px 14px;
-    margin:5px;
-    font-size:14px;
-    border-radius:12px;
-    border:none;
-    cursor:pointer;
-    backdrop-filter: blur(10px);
+  textarea:focus {
+    background: rgba(255,255,255,0.08);
+    box-shadow:0 6px 24px rgba(0,0,0,0.6);
   }
 
   button {
-    background: rgba(37, 99, 235, 0.8);
-    color:white;
-    transition:0.2s;
+    padding:12px 24px;
+    border-radius:50px;
+    border:none;
+    background: linear-gradient(135deg,#4ade80,#22d3ee);
+    color:#111;
+    font-weight:bold;
+    cursor:pointer;
+    transition:0.3s;
   }
   button:hover {
-    background: rgba(37, 99, 235, 1);
+    transform:scale(1.05);
+    box-shadow:0 4px 20px rgba(0,255,255,0.5);
   }
 
   select {
-    background: rgba(255,255,255,0.1);
+    padding:6px 12px;
+    border-radius:30px;
+    border:none;
+    background: rgba(255,255,255,0.05);
     color:white;
+    margin:5px;
+    font-weight:bold;
   }
 
   #answers {
     width:90%;
-    max-width:400px;
-    height:400px;
+    max-width:450px;
+    height:450px;
     overflow-y:auto;
     display:flex;
     flex-direction:column;
-    gap:10px;
+    gap:12px;
+    margin-top:20px;
     padding:10px;
-    border-radius:20px;
-    margin-top:10px;
+    border-radius:30px;
     background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(15px);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    backdrop-filter: blur(12px);
+    box-shadow:0 8px 32px rgba(0,0,0,0.7);
+    scroll-behavior:smooth;
   }
 
   .bubble {
-    padding:12px 18px;
-    border-radius:20px;
-    max-width:80%;
+    padding:14px 18px;
+    border-radius:30px;
+    max-width:75%;
     line-height:1.4;
     word-wrap:break-word;
     position:relative;
-    backdrop-filter: blur(10px);
-    box-shadow:0 4px 16px rgba(0,0,0,0.4);
-    transition:0.2s;
+    animation: fadeIn 0.3s ease forwards;
+  }
+
+  @keyframes fadeIn {
+    0% {opacity:0; transform: translateY(10px);}
+    100% {opacity:1; transform: translateY(0);}
   }
 
   .user {
-    background: rgba(37, 99, 235, 0.8);
-    color:white;
+    background: linear-gradient(135deg,#22d3ee,#4ade80);
+    color:#111;
     align-self:flex-end;
-    border-bottom-right-radius:4px;
   }
 
   .ai {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.08);
     color:#a5f3fc;
     align-self:flex-start;
-    border-bottom-left-radius:4px;
+    box-shadow:0 4px 12px rgba(0,255,255,0.2);
   }
 
   .typing {
     width:40px;
     height:6px;
     border-radius:3px;
-    background: #a5f3fc;
+    background:#22d3ee;
     animation: blink 1s infinite alternate;
   }
 
   @keyframes blink {
-    0% {opacity:0.2;}
-    100% {opacity:1;}
+    0%{opacity:0.2;}
+    100%{opacity:1;}
   }
 
   .copy-btn {
@@ -123,17 +135,23 @@
     top:4px;
     right:6px;
     font-size:12px;
-    background: rgba(37,99,235,0.8);
-    color:white;
+    background: #4ade80;
     border:none;
     border-radius:6px;
     padding:2px 6px;
     cursor:pointer;
     transition:0.2s;
   }
-
   .copy-btn:hover {
-    background: rgba(37,99,235,1);
+    background:#22d3ee;
+  }
+
+  ::-webkit-scrollbar {
+    width:6px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.3);
+    border-radius:3px;
   }
 </style>
 </head>
@@ -186,7 +204,7 @@ async function generateReply() {
 
     const data = await res.json();
 
-    // Remove typing and show actual AI replies
+    // Remove typing and show AI replies
     aiBubble.innerHTML = "";
     const replies = data.reply.split("\n").filter(r=>r.trim()!=="");
     replies.forEach(r=>{
@@ -194,7 +212,6 @@ async function generateReply() {
       b.className = "bubble ai";
       b.textContent = r;
 
-      // Copy button
       const copyBtn = document.createElement("button");
       copyBtn.className = "copy-btn";
       copyBtn.textContent = "Copy";
@@ -207,10 +224,10 @@ async function generateReply() {
     answers.scrollTop = answers.scrollHeight;
 
   } catch(err) {
-    aiBubble.textContent = "Something went wrong: " + err.message;
+    aiBubble.textContent = "Something went wrong: "+err.message;
   }
 
-  document.getElementById("message").value = "";
+  document.getElementById("message").value="";
 }
 </script>
 
