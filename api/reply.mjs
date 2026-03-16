@@ -17,7 +17,7 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           contents:[{
             parts:[{
-              text:`Give 3 short replies in simple Urdu for this message: "${message}". Each reply 1–2 sentences. Tone: ${tone || "friendly"}`
+              text: `Just give 3 short, casual replies for this message exactly as responses, without any intro or explanation. Write them ${tone || "friendly"} and in simple Urdu (Roman script): "${message}"` 
             }]
           }]
         })
