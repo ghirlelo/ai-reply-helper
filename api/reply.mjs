@@ -4,9 +4,8 @@ export default async function handler(req, res) {
   const { message, tone } = req.body;
   const apiKey = process.env.GEMINI_API_KEY;
 
-  // Make sure a message is provided
   if (!message || message.trim() === "") {
-    return res.status(400).json({ reply: "Please enter a message first." });
+    return res.status(400).json({ reply: "Please enter a message." });
   }
 
   try {
@@ -20,7 +19,7 @@ export default async function handler(req, res) {
             {
               parts: [
                 {
-                  text: `Give 3 short reply suggestions in simple Urdu for this message: "${message}". Each reply should be 1–2 sentences. Tone: ${tone || "friendly"}`
+                  text: `Give 3 short replies in simple Urdu for this message: "${message}". Each reply 1–2 sentences. Tone: ${tone || "friendly"}`
                 }
               ]
             }
@@ -30,8 +29,6 @@ export default async function handler(req, res) {
     );
 
     const data = await response.json();
-
-    // Get the AI's response
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "AI did not respond.";
 
     res.status(200).json({ reply: text });
