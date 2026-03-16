@@ -2,69 +2,84 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Reply Helper</title>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; text-align: center; padding: 20px; }
-    .container { max-width: 500px; margin: 50px auto; background: #1e293b; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    h1 { color: #3b82f6; }
-    textarea { width: 100%; height: 100px; padding: 15px; border-radius: 12px; border: none; background: #0f172a; color: white; font-size: 16px; box-sizing: border-box; resize: none; }
-    .options { margin: 20px 0; display: flex; gap: 10px; justify-content: center; }
-    select { padding: 10px; border-radius: 8px; background: #334155; color: white; border: none; }
-    button { background: #2563eb; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-    #answers { margin-top: 25px; text-align: left; background: #0f172a; padding: 15px; border-radius: 12px; min-height: 50px; border-left: 4px solid #3b82f6; }
-    .reply-item { background: #1e293b; padding: 10px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-    .copy-btn { background: #334155; color: #93c5fd; border: 1px solid #3b82f6; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+    body{
+      background:#111;
+      color:white;
+      font-family:Arial;
+      text-align:center;
+      padding:40px;
+    }
+    textarea{
+      width:300px;
+      height:100px;
+      padding:10px;
+      font-size:16px;
+    }
+    button{
+      padding:10px 20px;
+      margin-top:10px;
+      cursor:pointer;
+    }
+    select{
+      padding:6px 10px;
+      margin-top:10px;
+      font-size:14px;
+    }
+    #answers{
+      margin-top:20px;
+    }
+    p{
+      background:#222;
+      padding:8px;
+      border-radius:5px;
+      line-height:1.4;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Reply Helper 😎</h1>
-    <textarea id="message" placeholder="Paste the message here..."></textarea>
-    <div class="options">
-      <select id="tone">
-        <option value="friendly">😊 Friendly</option>
-        <option value="formal">💼 Professional</option>
-        <option value="funny">😂 Funny</option>
-        <option value="savage">🔥 Savage</option>
-      </select>
-      <button onclick="generateReply()">Get Replies</button>
-    </div>
-    <div id="answers">Suggested replies will appear here...</div>
-  </div>
 
-  <script>
-    async function generateReply() {
-      const message = document.getElementById("message").value.trim();
-      const tone = document.getElementById("tone").value;
-      const answers = document.getElementById("answers");
-      if (!message) return alert("Paste a message!");
-      answers.innerHTML = "Thinking...";
+<h1>AI Reply Helper</h1>
+<textarea id="message" placeholder="Paste the message here"></textarea>
+<br>
+<select id="tone">
+  <option value="friendly">Friendly</option>
+  <option value="formal">Formal</option>
+  <option value="funny">Funny</option>
+</select>
+<br>
+<button onclick="generateReply()">Get Reply Ideas</button>
 
-      try {
-        const res = await fetch("/api/reply", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message, tone })
-        });
-        const data = await res.json();
-        const suggestions = data.reply.split(/\d\./).filter(s => s.trim() !== "");
-        answers.innerHTML = "";
-        suggestions.forEach(text => {
-          const cleanText = text.replace(/[*#]/g, "").trim();
-          const div = document.createElement("div");
-          div.className = "reply-item";
-          div.innerHTML = `<span>${cleanText}</span><button class="copy-btn" onclick="copyText('${cleanText.replace(/'/g, "\\'")}')">Copy</button>`;
-          answers.appendChild(div);
-        });
-      } catch (err) {
-        answers.innerHTML = "Error: Check Vercel Logs";
-      }
-    }
-    function copyText(text) {
-      navigator.clipboard.writeText(text);
-      alert("Copied!");
-    }
-  </script>
+<div id="answers"></div>
+
+<script>
+async function generateReply() {
+  const message = document.getElementById("message").value.trim();
+  const tone = document.getElementById("tone")?.value || "friendly";
+  const answers = document.getElementById("answers");
+
+  if (!message) {
+    answers.innerHTML = "<p>Please enter a message!</p>";
+    return;
+  }
+
+  answers.innerHTML = "<p>AI is thinking...</p>";
+
+  try {
+    const res = await fetch("/api/reply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, tone })
+    });
+
+    const data = await res.json();
+    answers.innerHTML = "<p>" + data.reply.replace(/\n/g, "<br>") + "</p>";
+  } catch (err) {
+    answers.innerHTML = "<p>Something went wrong: " + err.message + "</p>";
+  }
+}
+</script>
+
 </body>
 </html>
