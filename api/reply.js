@@ -11,12 +11,10 @@ export default async function handler(req, res) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        system_instruction: {
-          parts: [{ text: "You are a helpful assistant that provides 3 short, polite, and helpful reply suggestions to messages. Always format as a numbered list 1. 2. 3." }]
-        },
         contents: [{
-          parts: [{ text: `Provide 3 short ${tone} replies for: "${message}"` }]
+          parts: [{ text: `Give 3 short ${tone} replies for: "${message}". Number them 1. 2. 3.` }]
         }],
+        // This part stops the "Safety Block" error
         safetySettings: [
           { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
           { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
@@ -31,9 +29,7 @@ export default async function handler(req, res) {
     if (data.candidates && data.candidates[0].content) {
       res.status(200).json({ reply: data.candidates[0].content.parts[0].text });
     } else {
-      // If still blocked, this will show the reason in the Vercel logs
-      console.error("AI Blocked:", JSON.stringify(data));
-      res.status(200).json({ reply: "1. AI is still filtering this.\n2. Try a different message.\n3. Check Google Cloud safety settings." });
+      res.status(200).json({ reply: "1. The AI is still blocking this message.\n2. Try a different topic.\n3. Check your Google AI Studio settings." });
     }
   } catch (err) {
     res.status(500).json({ reply: "1. Connection Error.\n2. " + err.message });
