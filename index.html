@@ -3,162 +3,276 @@
 <head>
 <meta charset="UTF-8">
 <title>AI Reply Helper</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
-<style>
-body{
-  margin:0;
-  font-family:Inter, sans-serif;
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  background:radial-gradient(circle at 30% 30%, #1a1a2e, #09090f);
-  color:white;
-  overflow:hidden;
-}
 
-.app{
-  width:400px;
-  padding:20px;
-  border-radius:30px;
-  background:rgba(255,255,255,0.05);
-  backdrop-filter:blur(20px);
-  box-shadow:0 0 40px rgba(0,0,0,0.5), 0 0 60px rgba(34,211,238,0.2);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
+<style>
+
+body{
+margin:0;
+font-family:Segoe UI;
+background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+color:white;
+display:flex;
+flex-direction:column;
+align-items:center;
+height:100vh;
 }
 
 h1{
-  margin-bottom:20px;
+margin-top:20px;
+font-weight:500;
+}
+
+#chat{
+width:90%;
+max-width:450px;
+height:60vh;
+overflow-y:auto;
+background:rgba(255,255,255,0.05);
+backdrop-filter:blur(10px);
+border-radius:20px;
+padding:15px;
+margin-top:20px;
+display:flex;
+flex-direction:column;
+gap:10px;
+}
+
+.bubble{
+padding:12px 16px;
+border-radius:20px;
+max-width:75%;
+animation:fade .2s ease;
+position:relative;
+}
+
+@keyframes fade{
+from{opacity:0;transform:translateY(5px)}
+to{opacity:1}
+}
+
+.user{
+background:linear-gradient(135deg,#22d3ee,#4ade80);
+color:black;
+align-self:flex-end;
+}
+
+.ai{
+background:rgba(255,255,255,0.1);
+align-self:flex-start;
+}
+
+.copy{
+position:absolute;
+top:4px;
+right:6px;
+font-size:11px;
+cursor:pointer;
+background:#22d3ee;
+border:none;
+border-radius:6px;
+padding:2px 6px;
+}
+
+#inputBox{
+margin-top:15px;
+display:flex;
+flex-direction:column;
+align-items:center;
 }
 
 textarea{
-  width:100%;
-  height:80px;
-  border-radius:20px;
-  border:none;
-  padding:12px;
-  background:rgba(255,255,255,0.08);
-  color:white;
-  resize:none;
-  outline:none;
-  font-size:14px;
+width:90%;
+max-width:450px;
+height:60px;
+border-radius:30px;
+border:none;
+padding:12px;
+font-size:15px;
+background:rgba(255,255,255,0.08);
+color:white;
+resize:none;
+outline:none;
 }
 
-select{
-  margin-top:10px;
-  padding:6px 10px;
-  border-radius:15px;
-  border:none;
-  background:rgba(255,255,255,0.1);
-  color:white;
-  font-size:14px;
+.controls{
+margin-top:10px;
 }
 
 button{
-  margin-top:10px;
-  padding:10px 20px;
-  border-radius:20px;
-  border:none;
-  background:linear-gradient(135deg,#22d3ee,#4ade80);
-  color:black;
-  font-weight:500;
-  cursor:pointer;
+padding:10px 20px;
+border:none;
+border-radius:25px;
+background:linear-gradient(135deg,#4ade80,#22d3ee);
+cursor:pointer;
+font-weight:bold;
 }
 
-button:hover{
-  filter:brightness(1.1);
+select{
+border-radius:20px;
+padding:5px 10px;
+border:none;
+margin-right:5px;
 }
 
-#answers{
-  margin-top:20px;
-  width:100%;
+#quickReplies{
+margin-top:10px;
+display:flex;
+flex-wrap:wrap;
+gap:6px;
+justify-content:center;
 }
 
-p{
-  background:rgba(255,255,255,0.08);
-  padding:10px;
-  border-radius:15px;
-  line-height:1.4;
-  margin-bottom:8px;
-  word-break:break-word;
-  position:relative;
+.quick{
+background:rgba(255,255,255,0.1);
+border:none;
+padding:6px 10px;
+border-radius:15px;
+cursor:pointer;
+color:white;
 }
 
-p::after{
-  content:"copy";
-  position:absolute;
-  right:10px;
-  top:50%;
-  transform:translateY(-50%);
-  font-size:10px;
-  background:#22d3ee;
-  color:black;
-  border-radius:6px;
-  padding:2px 5px;
-  cursor:pointer;
-  opacity:0;
-  transition:0.2s;
+.typing{
+width:35px;
+height:6px;
+background:#22d3ee;
+border-radius:3px;
+animation:blink 1s infinite alternate;
 }
 
-p:hover::after{
-  opacity:1;
+@keyframes blink{
+0%{opacity:0.2}
+100%{opacity:1}
 }
 
 </style>
 </head>
+
 <body>
-<div class="app">
+
 <h1>AI Reply Helper</h1>
-<textarea id="message" placeholder="Paste your message here..."></textarea>
+
+<div id="chat"></div>
+
+<div id="inputBox">
+
+<textarea id="message" placeholder="Type message..."></textarea>
+
+<div class="controls">
 <select id="tone">
-  <option value="friendly">Friendly</option>
-  <option value="formal">Formal</option>
-  <option value="funny">Funny</option>
+<option value="friendly">Friendly</option>
+<option value="funny">Funny</option>
+<option value="formal">Formal</option>
 </select>
-<button onclick="generateReply()">Get Reply Ideas</button>
-<div id="answers"></div>
+
+<button onclick="generateReply()">Send</button>
+</div>
+
+<div id="quickReplies"></div>
+
 </div>
 
 <script>
-async function generateReply() {
-  const message = document.getElementById("message").value.trim();
-  const tone = document.getElementById("tone")?.value || "friendly";
-  const answers = document.getElementById("answers");
-  if (!message) {
-    answers.innerHTML = "<p>Please enter a message!</p>";
-    return;
-  }
 
-  answers.innerHTML = "<p>AI is thinking...</p>";
+const chat=document.getElementById("chat")
 
-  try {
-    const res = await fetch("/api/reply", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, tone })
-    });
+// load history
+chat.innerHTML=localStorage.getItem("chatHistory") || ""
 
-    const data = await res.json();
-    // works with reply or explanation
-    let text = data.reply || data.explanation || "AI did not respond.";
+async function generateReply(){
 
-    // Split into 3 replies max
-    const lines = text.split(/[\n.]+/).filter(r=>r.trim()!=="").slice(0,3);
+const message=document.getElementById("message").value.trim()
+const tone=document.getElementById("tone").value
 
-    answers.innerHTML = "";
-    lines.forEach(r=>{
-      const p=document.createElement("p");
-      p.textContent = r;
-      p.onclick = ()=>navigator.clipboard.writeText(r);
-      answers.appendChild(p);
-    });
+if(!message) return
 
-  } catch (err) {
-    answers.innerHTML = "<p>Something went wrong: " + err.message + "</p>";
-  }
+// user bubble
+const user=document.createElement("div")
+user.className="bubble user"
+user.textContent=message
+chat.appendChild(user)
+
+// typing
+const typing=document.createElement("div")
+typing.className="bubble ai"
+typing.innerHTML='<div class="typing"></div>'
+chat.appendChild(typing)
+
+chat.scrollTop=chat.scrollHeight
+
+try{
+
+const res=await fetch("/api/reply",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({message,tone})
+})
+
+const data=await res.json()
+
+typing.remove()
+
+const replies=data.reply.split("\n").filter(r=>r.trim()!="")
+
+showQuickReplies(replies)
+
+replies.forEach(r=>{
+
+const b=document.createElement("div")
+b.className="bubble ai"
+b.textContent=r
+
+const copy=document.createElement("button")
+copy.className="copy"
+copy.textContent="copy"
+copy.onclick=()=>navigator.clipboard.writeText(r)
+
+b.appendChild(copy)
+
+chat.appendChild(b)
+
+})
+
+chat.scrollTop=chat.scrollHeight
+
+localStorage.setItem("chatHistory",chat.innerHTML)
+
+}catch(e){
+
+typing.textContent="Error getting reply"
+
 }
+
+document.getElementById("message").value=""
+
+}
+
+function showQuickReplies(list){
+
+const box=document.getElementById("quickReplies")
+box.innerHTML=""
+
+list.forEach(r=>{
+
+const btn=document.createElement("button")
+btn.className="quick"
+btn.textContent=r
+btn.onclick=()=>navigator.clipboard.writeText(r)
+
+box.appendChild(btn)
+
+})
+
+}
+
+// enter key send
+document.getElementById("message").addEventListener("keypress",e=>{
+if(e.key==="Enter"){
+e.preventDefault()
+generateReply()
+}
+})
+
 </script>
+
 </body>
 </html>
