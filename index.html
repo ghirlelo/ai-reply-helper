@@ -1,46 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>AI Reply Helper</title>
-  <style>
-    body{
-      background:#111;
-      color:white;
-      font-family:Arial;
-      text-align:center;
-      padding:40px;
-    }
-    textarea{
-      width:300px;
-      height:100px;
-      padding:10px;
-      font-size:16px;
-    }
-    button{
-      padding:10px 20px;
-      margin-top:10px;
-      cursor:pointer;
-    }
-    select{
-      padding:6px 10px;
-      margin-top:10px;
-      font-size:14px;
-    }
-    #answers{
-      margin-top:20px;
-    }
-    p{
-      background:#222;
-      padding:8px;
-      border-radius:5px;
-      line-height:1.4;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>AI Reply Helper</title>
+<style>
+  body {
+    background:#111;
+    color:white;
+    font-family:Arial;
+    text-align:center;
+    padding:20px;
+  }
+  #message {
+    width:80%;
+    max-width:400px;
+    height:80px;
+    padding:10px;
+    font-size:16px;
+    margin-bottom:10px;
+  }
+  button {
+    padding:10px 20px;
+    cursor:pointer;
+    margin-bottom:10px;
+  }
+  select {
+    padding:6px 10px;
+    font-size:14px;
+    margin-bottom:10px;
+  }
+  #answers {
+    max-width:400px;
+    margin:auto;
+    text-align:left;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    height:400px;
+    overflow-y:auto;
+    border:1px solid #333;
+    padding:10px;
+    border-radius:8px;
+  }
+  .bubble {
+    padding:10px 15px;
+    border-radius:15px;
+    max-width:80%;
+    line-height:1.4;
+    position:relative;
+    word-wrap: break-word;
+  }
+  .user {
+    background:#2563eb;
+    color:white;
+    align-self:flex-end;
+    border-bottom-right-radius:0;
+  }
+  .ai {
+    background:#1f2937;
+    color:#a5f3fc;
+    align-self:flex-start;
+    border-bottom-left-radius:0;
+  }
+  .typing {
+    width:30px;
+    height:6px;
+    background:#a5f3fc;
+    border-radius:3px;
+    animation: blink 1s infinite alternate;
+  }
+  @keyframes blink {
+    0%{opacity:0.2;}
+    100%{opacity:1;}
+  }
+  .copy-btn {
+    position:absolute;
+    top:4px;
+    right:6px;
+    font-size:12px;
+    background:#2563eb;
+    color:white;
+    border:none;
+    border-radius:4px;
+    padding:2px 6px;
+    cursor:pointer;
+  }
+</style>
 </head>
 <body>
 
 <h1>AI Reply Helper</h1>
+
 <textarea id="message" placeholder="Paste the message here"></textarea>
 <br>
 <select id="tone">
@@ -49,7 +99,7 @@
   <option value="funny">Funny</option>
 </select>
 <br>
-<button onclick="generateReply()">Get Reply Ideas</button>
+<button onclick="generateReply()">Send</button>
 
 <div id="answers"></div>
 
@@ -59,25 +109,51 @@ async function generateReply() {
   const tone = document.getElementById("tone")?.value || "friendly";
   const answers = document.getElementById("answers");
 
-  if (!message) {
-    answers.innerHTML = "<p>Please enter a message!</p>";
-    return;
-  }
+  if (!message) return alert("Please enter a message!");
 
-  answers.innerHTML = "<p>AI is thinking...</p>";
+  // Add user bubble
+  const userBubble = document.createElement("div");
+  userBubble.className = "bubble user";
+  userBubble.textContent = message;
+  answers.appendChild(userBubble);
+
+  // Add AI typing bubble
+  const aiBubble = document.createElement("div");
+  aiBubble.className = "bubble ai";
+  const typingDiv = document.createElement("div");
+  typingDiv.className = "typing";
+  aiBubble.appendChild(typingDiv);
+  answers.appendChild(aiBubble);
+
+  // Auto-scroll
+  answers.scrollTop = answers.scrollHeight;
 
   try {
     const res = await fetch("/api/reply", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, tone })
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({message,tone})
     });
 
     const data = await res.json();
-    answers.innerHTML = "<p>" + data.reply.replace(/\n/g, "<br>") + "</p>";
-  } catch (err) {
-    answers.innerHTML = "<p>Something went wrong: " + err.message + "</p>";
+
+    // Remove typing
+    aiBubble.innerHTML = data.reply.replace(/\n/g,"<br>");
+
+    // Add copy button
+    const copyBtn = document.createElement("button");
+    copyBtn.className = "copy-btn";
+    copyBtn.textContent = "Copy";
+    copyBtn.onclick = () => navigator.clipboard.writeText(data.reply);
+    aiBubble.appendChild(copyBtn);
+
+    answers.scrollTop = answers.scrollHeight;
+  } catch(err) {
+    aiBubble.textContent = "Something went wrong: " + err.message;
   }
+
+  // Clear input
+  document.getElementById("message").value = "";
 }
 </script>
 
