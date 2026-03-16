@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,10 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <style>
-
-*{
-box-sizing:border-box;
-}
+*{box-sizing:border-box;}
 
 body{
 margin:0;
@@ -23,8 +21,6 @@ background:radial-gradient(circle at 20% 20%,#1a1a2e,#09090f);
 overflow:hidden;
 color:white;
 }
-
-/* animated background glow */
 
 body::before{
 content:"";
@@ -58,8 +54,6 @@ from{transform:translate(0,0)}
 to{transform:translate(-100px,-80px)}
 }
 
-/* main container */
-
 .app{
 width:420px;
 height:650px;
@@ -70,12 +64,8 @@ border:1px solid rgba(255,255,255,0.1);
 display:flex;
 flex-direction:column;
 overflow:hidden;
-box-shadow:
-0 0 40px rgba(0,0,0,0.6),
-0 0 60px rgba(34,211,238,0.2);
+box-shadow:0 0 40px rgba(0,0,0,0.6),0 0 60px rgba(34,211,238,0.2);
 }
-
-/* header */
 
 .header{
 padding:18px;
@@ -83,10 +73,7 @@ text-align:center;
 font-size:18px;
 font-weight:500;
 border-bottom:1px solid rgba(255,255,255,0.08);
-letter-spacing:0.5px;
 }
-
-/* chat */
 
 #chat{
 flex:1;
@@ -97,8 +84,6 @@ flex-direction:column;
 gap:12px;
 scroll-behavior:smooth;
 }
-
-/* bubbles */
 
 .bubble{
 max-width:75%;
@@ -128,8 +113,6 @@ backdrop-filter:blur(10px);
 border:1px solid rgba(255,255,255,0.1);
 }
 
-/* copy button */
-
 .copy{
 position:absolute;
 top:4px;
@@ -148,8 +131,6 @@ transition:.2s;
 .bubble:hover .copy{
 opacity:1;
 }
-
-/* input */
 
 .inputArea{
 padding:15px;
@@ -195,8 +176,6 @@ cursor:pointer;
 font-weight:500;
 }
 
-/* quick replies */
-
 #quick{
 display:flex;
 flex-wrap:wrap;
@@ -220,8 +199,6 @@ background:#22d3ee;
 color:black;
 }
 
-/* typing indicator */
-
 .typing{
 width:40px;
 height:8px;
@@ -234,7 +211,6 @@ animation:blink 1s infinite alternate;
 from{opacity:.3}
 to{opacity:1}
 }
-
 </style>
 </head>
 
@@ -271,7 +247,6 @@ Reply Helper AI
 <script>
 
 const chat=document.getElementById("chat")
-
 chat.innerHTML=localStorage.getItem("history") || ""
 
 async function generateReply(){
@@ -305,7 +280,10 @@ const data=await res.json()
 
 typing.remove()
 
-const replies=data.reply.split("\n").filter(r=>r.trim()!="")
+// FIX: works with reply OR explanation
+const text = data.reply || data.explanation || "AI did not respond."
+
+const replies = text.split("\n").filter(r => r.trim() !== "")
 
 showQuick(replies)
 
@@ -367,3 +345,4 @@ generateReply()
 
 </body>
 </html>
+```
