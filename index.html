@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>AI Reply Helper</title>
 <style>
-  /* Body with dark gradient */
   body {
     margin:0;
     padding:0;
@@ -18,7 +17,6 @@
     color:white;
   }
 
-  /* Floating orbs canvas */
   #bgCanvas {
     position:fixed;
     top:0;
@@ -112,7 +110,6 @@
     align-self:flex-start;
     box-shadow:0 4px 12px rgba(0,255,255,0.2);
   }
-
 </style>
 </head>
 <body>
@@ -128,19 +125,16 @@
 <div id="answers"></div>
 
 <script>
-/* ---------------- Floating Background ---------------- */
+/* Floating Background */
 const canvas = document.getElementById('bgCanvas');
 const ctx = canvas.getContext('2d');
 let width = canvas.width = window.innerWidth;
 let height = canvas.height = window.innerHeight;
-
 const orbs = [];
 const orbCount = 40;
 
 class Orb {
-  constructor() {
-    this.reset();
-  }
+  constructor() { this.reset(); }
   reset() {
     this.x = Math.random()*width;
     this.y = Math.random()*height;
@@ -150,44 +144,19 @@ class Orb {
     this.alpha = Math.random()*0.5 + 0.2;
     this.color = `rgba(34, 211, 238, ${this.alpha})`;
   }
-  draw() {
-    ctx.beginPath();
-    ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
-    ctx.fillStyle = this.color;
-    ctx.fill();
-  }
-  update() {
-    this.x += this.vx;
-    this.y += this.vy;
-    if(this.x < 0 || this.x > width || this.y < 0 || this.y > height){
-      this.reset();
-    }
-    this.draw();
-  }
+  draw() { ctx.beginPath(); ctx.arc(this.x,this.y,this.radius,0,Math.PI*2); ctx.fillStyle=this.color; ctx.fill(); }
+  update() { this.x+=this.vx; this.y+=this.vy; if(this.x<0||this.x>width||this.y<0||this.y>height) this.reset(); this.draw(); }
 }
-
-for(let i=0;i<orbCount;i++){
-  orbs.push(new Orb());
-}
-
-function animate(){
-  ctx.clearRect(0,0,width,height);
-  orbs.forEach(o=>o.update());
-  requestAnimationFrame(animate);
-}
+for(let i=0;i<orbCount;i++) orbs.push(new Orb());
+function animate(){ ctx.clearRect(0,0,width,height); orbs.forEach(o=>o.update()); requestAnimationFrame(animate); }
 animate();
+window.addEventListener('resize', ()=>{ width=canvas.width=window.innerWidth; height=canvas.height=window.innerHeight; });
 
-window.addEventListener('resize', ()=>{
-  width = canvas.width = window.innerWidth;
-  height = canvas.height = window.innerHeight;
-});
-
-/* ---------------- Chat Logic ---------------- */
+/* Chat Logic */
 async function generateReply() {
   const message = document.getElementById("message").value.trim();
   const answers = document.getElementById("answers");
-
-  if (!message) return alert("Please enter a message!");
+  if(!message) return alert("Please enter a message!");
 
   // User bubble
   const userBubble = document.createElement("div");
@@ -200,25 +169,33 @@ async function generateReply() {
   aiBubble.className = "bubble ai";
   aiBubble.textContent = "AI is typing...";
   answers.appendChild(aiBubble);
-
   answers.scrollTop = answers.scrollHeight;
 
-  // Fake AI reply for demo
-  setTimeout(()=>{
-    aiBubble.textContent = "";
-    const replies = [
-      "Bas kat rahi hai",
-      "Jese tese. Tum sunao",
-      "Koi udhaar toh nahi maangna?"
-    ];
-    replies.forEach(r=>{
+  try {
+    // Gemini API call
+    const res = await fetch("/api/reply", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({message})
+    });
+    const data = await res.json();
+    let text = data.reply || data.explanation || "AI did not respond.";
+
+    // Split into 3 replies max
+    const lines = text.split(/[\n.]+/).filter(r=>r.trim()!=="").slice(0,3);
+
+    aiBubble.remove();
+    lines.forEach(r=>{
       const b = document.createElement("div");
       b.className = "bubble ai";
       b.textContent = r;
       answers.appendChild(b);
     });
+
     answers.scrollTop = answers.scrollHeight;
-  },1000);
+  } catch(err){
+    aiBubble.textContent = "Server error: " + err.message;
+  }
 
   document.getElementById("message").value="";
 }
