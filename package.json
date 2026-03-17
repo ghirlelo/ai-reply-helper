@@ -1,11 +1,11 @@
 {
-  "name": "ai-reply-helper",
-  "version": "1.0.0",
-  "type": "module",
-  "scripts": {
-    "dev":"vercel dev"
-  },
-  "dependencies": {
-    "node-fetch":"^3.3.1"
-  }
+ "name": "ai-reply-helper",
+ "version": "1.0.0",
+ "type": "module",
+ "scripts": {
+ "dev": "vercel dev"
+ },
+ "dependencies": {
+ "node-fetch": "^3.3.1"
+ }
 }
