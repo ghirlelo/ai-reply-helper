@@ -1,63 +1,71 @@
 export default async function handler(req, res) {
+  // 1. Get data from frontend
   const { message, tone } = req.body;
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
 
+  // 2. Security & Input Checks
   if (!apiKey) {
-    return res.status(500).json({ reply: "API key missing" });
+    return res.status(500).json({ reply: "Error: GROQ_API_KEY is missing in Vercel settings." });
   }
 
   if (!message || message.trim() === "") {
-    return res.status(400).json({ reply: "Please enter a message" });
+    return res.status(400).json({ reply: "Please enter a message to get started." });
   }
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `Give exactly 3 short ${tone || "friendly"} replies in Roman Urdu to this: "${message}"
-
-Rules:
-- Roman Urdu only (e.g., "Kya hal hai?")
-- No English translations
-- No numbers (1, 2, 3) or bullet points
-- No quotes or hashtags
-- One reply per line`
-            }]
-          }]
-        })
-      }
-    );
-
-    // 🛑 Check for 429 Resource Exhausted (Free Tier Limit)
-    if (response.status === 429) {
-      return res.status(429).json({ reply: "Limit reached. Please wait 60 seconds." });
-    }
+    // 3. Call Groq API
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "llama3-70b-8192", // Powerful model with high free limits
+        messages: [
+          {
+            role: "system",
+            content: "You are a helpful chat assistant. Give exactly 3 short, natural replies in Roman Urdu. No English, no numbers, no explanations. Each reply on a new line."
+          },
+          {
+            role: "user",
+            content: `Give 3 ${tone || "friendly"} replies for: "${message}"`
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 150
+      })
+    });
 
     const data = await response.json();
 
-    if (data.error) {
-      return res.status(500).json({ reply: "Gemini Error: " + data.error.message });
+    // 🛑 Handle Groq Rate Limits (429)
+    if (response.status === 429) {
+      return res.status(429).json({ reply: "Groq is busy. Please wait a few seconds." });
     }
 
-    let text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "AI did not respond.";
+    if (data.error) {
+      return res.status(500).json({ reply: "Groq Error: " + data.error.message });
+    }
 
-    // 🧹 PRO CLEANING: Removes numbers, stars, and dashes from the start of lines
+    // 4. Get the AI text
+    let text = data.choices?.[0]?.message?.content || "AI did not respond.";
+
+    // 🧹 Clean output (removes numbers, bullets, or extra symbols)
     let cleanReplies = text
       .split("\n")
       .map(r => r.replace(/^[0-9.\-\)\s*#]+/, "").trim()) 
       .filter(r => r.length > 2)
       .slice(0, 3);
 
+    // 5. Send back to app
     return res.status(200).json({
       reply: cleanReplies.join("\n")
     });
 
   } catch (error) {
-    return res.status(500).json({ reply: "Server error: " + error.message });
+    return res.status(500).json({
+      reply: "Server error: " + error.message
+    });
   }
 }
