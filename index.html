@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>AI Reply Helper</title>
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>AI Reply Helper</title>
+
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="logo.png">
 <link rel="apple-touch-icon" href="logo.png">
@@ -14,48 +14,111 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <style>
 body{
-  margin:0; font-family:Inter, sans-serif; height:100vh;
-  display:flex; justify-content:center; align-items:center;
+  margin:0;
+  font-family:Inter, sans-serif;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
   background:radial-gradient(circle at 30% 30%, #1a1a2e, #09090f);
-  color:white; overflow:hidden;
+  color:white;
+  overflow:hidden;
 }
+
 .app{
-  width:90%; max-width:400px; padding:20px; border-radius:30px;
-  background:rgba(255,255,255,0.05); backdrop-filter:blur(20px);
+  width:90%;
+  max-width:400px;
+  padding:20px;
+  border-radius:30px;
+  background:rgba(255,255,255,0.05);
+  backdrop-filter:blur(20px);
   box-shadow:0 0 40px rgba(0,0,0,0.5), 0 0 60px rgba(34,211,238,0.2);
-  display:flex; flex-direction:column; align-items:center;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
 }
+
 h1{ margin-bottom:20px; font-size: 24px; }
+
 textarea{
-  width:100%; height:80px; border-radius:20px; border:none; padding:12px;
-  background:rgba(255,255,255,0.08); color:white; resize:none; outline:none;
-  font-size:14px; box-sizing: border-box;
+  width:100%;
+  height:80px;
+  border-radius:20px;
+  border:none;
+  padding:12px;
+  background:rgba(255,255,255,0.08);
+  color:white;
+  resize:none;
+  outline:none;
+  font-size:14px;
+  box-sizing: border-box;
 }
+
 select{
-  margin-top:10px; padding:8px 12px; border-radius:15px; border:none;
-  background:rgba(255,255,255,0.1); color:white; font-size:14px; cursor: pointer;
+  margin-top:10px;
+  padding:8px 12px;
+  border-radius:15px;
+  border:none;
+  background:rgba(255,255,255,0.1);
+  color:white;
+  font-size:14px;
+  cursor: pointer;
 }
+
 button#main-btn{
-  margin-top:15px; padding:10px 20px; border-radius:20px; border:none;
-  background:linear-gradient(135deg,#22d3ee,#4ade80); color:black;
-  font-weight:600; cursor:pointer; transition: 0.2s;
+  margin-top:15px;
+  padding:10px 20px;
+  border-radius:20px;
+  border:none;
+  background:linear-gradient(135deg,#22d3ee,#4ade80);
+  color:black;
+  font-weight:500;
+  cursor:pointer;
+  transition: 0.2s;
 }
-button#main-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+button#main-btn:disabled {
+  opacity: 0.5;
+  filter: grayscale(1);
+  cursor: not-allowed;
+}
+
+button#main-btn:hover:not(:disabled){ filter:brightness(1.1); transform: scale(1.02); }
+
 #answers{ margin-top:20px; width:100%; max-height: 250px; overflow-y: auto; }
+
 .reply-card {
-  background:rgba(255,255,255,0.08); padding:12px; border-radius:15px;
-  margin-bottom:10px; display: flex; justify-content: space-between;
-  align-items: center; gap: 10px; animation: fadeIn 0.3s ease;
+  background:rgba(255,255,255,0.08);
+  padding:12px;
+  border-radius:15px;
+  margin-bottom:10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  animation: fadeIn 0.3s ease;
 }
+
 @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
 .reply-text { font-size: 13px; line-height: 1.4; flex: 1; color: #e2e8f0; }
+
 .actions { display: flex; gap: 6px; }
+
 .action-btn {
-  padding: 6px 10px; border-radius: 8px; border: none;
-  font-size: 10px; font-weight: bold; cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: none;
+  font-size: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
 }
+
 .copy-btn { background: #22d3ee; color: black; }
 .wa-btn { background: #25D366; color: white; }
+.action-btn:hover { opacity: 0.8; transform: scale(1.05); }
+
 </style>
 </head>
 <body>
@@ -73,7 +136,7 @@ button#main-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 </div>
 
 <script>
-// REGISTER SERVICE WORKER
+// Service Worker Registration
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
 }
@@ -89,7 +152,7 @@ async function generateReply() {
     return;
   }
 
-  // Disable button to prevent Quota Overload
+  // Start Cooldown
   btn.disabled = true;
   btn.innerText = "Thinking...";
   answers.innerHTML = "<div class='reply-card'>AI is thinking...</div>";
@@ -103,19 +166,23 @@ async function generateReply() {
 
     const data = await res.json();
     
-    // Check if API returned a limit error
+    // Check for Rate Limit Error
     if (res.status === 429) {
-        throw new Error("Daily limit reached. Try again in 1 minute.");
+        throw new Error("Daily limit reached. Try again in 60s.");
     }
 
     let text = data.reply || data.explanation || "";
-    const lines = text.split(/(?:\d\.|\n)/).filter(r => r.trim().length > 1).slice(0, 3);
+
+    // Split logic
+    const lines = text.split("\n").filter(r => r.trim().length > 1).slice(0, 3);
+
     answers.innerHTML = "";
     
     lines.forEach(r => {
-      const cleanR = r.replace(/[*#]/g, "").trim();
+      const cleanR = r.replace(/^[0-9.\-\)\s*#]+/, "").trim();
       const card = document.createElement("div");
       card.className = "reply-card";
+      
       card.innerHTML = `
         <span class="reply-text">${cleanR}</span>
         <div class="actions">
@@ -126,12 +193,12 @@ async function generateReply() {
       answers.appendChild(card);
     });
 
-    if(lines.length === 0) answers.innerHTML = `<div class='reply-card'>${text}</div>`;
+    if(lines.length === 0 && text) answers.innerHTML = `<div class='reply-card'>${text}</div>`;
 
   } catch (err) {
     answers.innerHTML = `<div class='reply-card' style='color:#ff4d4d'>${err.message}</div>`;
   } finally {
-    // Re-enable button after 3 seconds
+    // End Cooldown after 3 seconds
     setTimeout(() => {
       btn.disabled = false;
       btn.innerText = "Get Reply Ideas";
@@ -141,12 +208,14 @@ async function generateReply() {
 
 function copyText(text, btn) {
   navigator.clipboard.writeText(text);
-  const old = btn.innerText; btn.innerText = "✓";
-  setTimeout(() => { btn.innerText = old; }, 1200);
+  const oldText = btn.innerText;
+  btn.innerText = "✓";
+  setTimeout(() => { btn.innerText = oldText; }, 1200);
 }
 
 function shareToWA(text) {
-  window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
 }
 </script>
 </body>
