@@ -7,6 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="logo.png">
 <link rel="apple-touch-icon" href="logo.png">
 
@@ -41,10 +43,10 @@ h1{ margin-bottom:20px; font-size: 24px; }
 
 textarea{
   width:100%;
-  height:100px;
+  height:80px;
   border-radius:20px;
   border:none;
-  padding:15px;
+  padding:12px;
   background:rgba(255,255,255,0.08);
   color:white;
   resize:none;
@@ -66,24 +68,19 @@ select{
 
 button#main-btn{
   margin-top:15px;
-  padding:12px 25px;
+  padding:10px 20px;
   border-radius:20px;
   border:none;
   background:linear-gradient(135deg,#22d3ee,#4ade80);
   color:black;
-  font-weight:600;
+  font-weight:500;
   cursor:pointer;
   transition: 0.2s;
 }
 
 button#main-btn:hover{ filter:brightness(1.1); transform: scale(1.02); }
 
-#answers{ 
-  margin-top:20px; 
-  width:100%; 
-  max-height: 200px; 
-  overflow-y: auto; 
-}
+#answers{ margin-top:20px; width:100%; }
 
 .reply-card {
   background:rgba(255,255,255,0.08);
@@ -104,10 +101,10 @@ button#main-btn:hover{ filter:brightness(1.1); transform: scale(1.02); }
 .actions { display: flex; gap: 6px; }
 
 .action-btn {
-  padding: 6px 12px;
+  padding: 5px 10px;
   border-radius: 8px;
   border: none;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: bold;
   cursor: pointer;
   transition: 0.2s;
@@ -116,7 +113,6 @@ button#main-btn:hover{ filter:brightness(1.1); transform: scale(1.02); }
 .copy-btn { background: #22d3ee; color: black; }
 .wa-btn { background: #25D366; color: white; }
 .action-btn:hover { opacity: 0.8; transform: scale(1.05); }
-<link rel="manifest" href="/manifest.json">
 
 </style>
 </head>
@@ -135,6 +131,11 @@ button#main-btn:hover{ filter:brightness(1.1); transform: scale(1.02); }
 </div>
 
 <script>
+// 3. SERVICE WORKER REGISTRATION (For "Install" button)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+
 async function generateReply() {
   const message = document.getElementById("message").value.trim();
   const tone = document.getElementById("tone").value;
@@ -192,8 +193,7 @@ function copyText(text, btn) {
 
 function shareToWA(text) {
   const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-  // Using location.href is better for mobile app feel
-  window.location.href = url;
+  window.location.href = url; // Better for mobile "app" feel
 }
 </script>
 </body>
