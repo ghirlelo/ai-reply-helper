@@ -11,23 +11,22 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Using the 2026 stable preview endpoint
+    // UPDATED 2026 ENDPOINT: Using 3.1 Flash-Lite for better free tier reliability
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `Give exactly 3 short ${tone || "friendly"} replies in Roman Urdu to this: "${message}"
+              text: `Give exactly 3 short ${tone || "friendly"} replies in Roman Urdu to: "${message}"
 
 Rules:
-- ONLY Roman Urdu (e.g., "Theek hai", "Kya masla hai?")
-- No English words or translations
-- No numbers, bullets, or dashes
-- No introductory text (Do not say "Here are your replies")
-- Each reply on its own new line`
+- Natural Roman Urdu ONLY (no English)
+- No headings, numbers, or bullets
+- No introductory text or quotes
+- Each reply on a new line`
             }]
           }]
         })
@@ -36,9 +35,9 @@ Rules:
 
     const data = await response.json();
 
-    // 🛑 Handle the "Quota Exceeded" error gracefully
+    // 🛑 2026 Rate Limit Check
     if (response.status === 429) {
-      return res.status(429).json({ reply: "Limit reached. Please wait 60 seconds." });
+      return res.status(429).json({ reply: "Wait 60 seconds for quota reset." });
     }
 
     if (data.error) {
@@ -47,21 +46,15 @@ Rules:
 
     let text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-    // 🧠 ADVANCED CLEANING: 
-    // Removes numbers (1.), stars (*), dashes (-), and extra whitespace
+    // 🧠 2026 CLEANING LOGIC (Strips all markdown symbols and numbers)
     let cleanReplies = text
       .split("\n")
       .map(r => r.replace(/^[0-9.\-\)\s*#]+/, "").trim()) 
       .filter(r => r.length > 2)
       .slice(0, 3);
 
-    // Fallback if the AI returns an empty or weird response
-    if (cleanReplies.length === 0) {
-      return res.status(200).json({ reply: "Koi jawab nahi mila.\nTry again please.\nKuch masla lag raha hai." });
-    }
-
     return res.status(200).json({
-      reply: cleanReplies.join("\n")
+      reply: cleanReplies.length > 0 ? cleanReplies.join("\n") : "Try again with a different message."
     });
 
   } catch (error) {
