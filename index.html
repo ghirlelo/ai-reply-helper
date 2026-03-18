@@ -1,64 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>AI Reply Helper</title>
-  <style>
-    body{
-      background:#111;
-      color:white;
-      font-family:Arial;
-      text-align:center;
-      padding:40px;
-    }
-    textarea{
-      width:300px;
-      height:100px;
-      padding:10px;
-      font-size:16px;
-    }
-    button{
-      padding:10px 20px;
-      margin-top:10px;
-      cursor:pointer;
-    }
-    select{
-      padding:6px 10px;
-      margin-top:10px;
-      font-size:14px;
-    }
-    #answers{
-      margin-top:20px;
-    }
-    p{
-      background:#222;
-      padding:8px;
-      border-radius:5px;
-      line-height:1.4;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>AI Reply Helper</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{
+  margin:0;
+  font-family:Inter, sans-serif;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:radial-gradient(circle at 30% 30%, #1a1a2e, #09090f);
+  color:white;
+  overflow:hidden;
+}
+
+.app{
+  width:400px;
+  padding:20px;
+  border-radius:30px;
+  background:rgba(255,255,255,0.05);
+  backdrop-filter:blur(20px);
+  box-shadow:0 0 40px rgba(0,0,0,0.5), 0 0 60px rgba(34,211,238,0.2);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+h1{
+  margin-bottom:20px;
+}
+
+textarea{
+  width:100%;
+  height:80px;
+  border-radius:20px;
+  border:none;
+  padding:12px;
+  background:rgba(255,255,255,0.08);
+  color:white;
+  resize:none;
+  outline:none;
+  font-size:14px;
+}
+
+select{
+  margin-top:10px;
+  padding:6px 10px;
+  border-radius:15px;
+  border:none;
+  background:rgba(255,255,255,0.1);
+  color:white;
+  font-size:14px;
+}
+
+button{
+  margin-top:10px;
+  padding:10px 20px;
+  border-radius:20px;
+  border:none;
+  background:linear-gradient(135deg,#22d3ee,#4ade80);
+  color:black;
+  font-weight:500;
+  cursor:pointer;
+}
+
+button:hover{
+  filter:brightness(1.1);
+}
+
+#answers{
+  margin-top:20px;
+  width:100%;
+}
+
+p{
+  background:rgba(255,255,255,0.08);
+  padding:10px;
+  border-radius:15px;
+  line-height:1.4;
+  margin-bottom:8px;
+  word-break:break-word;
+  position:relative;
+}
+
+p::after{
+  content:"copy";
+  position:absolute;
+  right:10px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:10px;
+  background:#22d3ee;
+  color:black;
+  border-radius:6px;
+  padding:2px 5px;
+  cursor:pointer;
+  opacity:0;
+  transition:0.2s;
+}
+
+p:hover::after{
+  opacity:1;
+}
+
+</style>
 </head>
 <body>
-
+<div class="app">
 <h1>AI Reply Helper</h1>
-<textarea id="message" placeholder="Paste the message here"></textarea>
-<br>
+<textarea id="message" placeholder="Paste your message here..."></textarea>
 <select id="tone">
   <option value="friendly">Friendly</option>
   <option value="formal">Formal</option>
   <option value="funny">Funny</option>
 </select>
-<br>
 <button onclick="generateReply()">Get Reply Ideas</button>
-
 <div id="answers"></div>
+</div>
 
 <script>
 async function generateReply() {
   const message = document.getElementById("message").value.trim();
   const tone = document.getElementById("tone")?.value || "friendly";
   const answers = document.getElementById("answers");
-
   if (!message) {
     answers.innerHTML = "<p>Please enter a message!</p>";
     return;
@@ -74,12 +141,24 @@ async function generateReply() {
     });
 
     const data = await res.json();
-    answers.innerHTML = "<p>" + data.reply.replace(/\n/g, "<br>") + "</p>";
+    // works with reply or explanation
+    let text = data.reply || data.explanation || "AI did not respond.";
+
+    // Split into 3 replies max
+    const lines = text.split(/[\n.]+/).filter(r=>r.trim()!=="").slice(0,3);
+
+    answers.innerHTML = "";
+    lines.forEach(r=>{
+      const p=document.createElement("p");
+      p.textContent = r;
+      p.onclick = ()=>navigator.clipboard.writeText(r);
+      answers.appendChild(p);
+    });
+
   } catch (err) {
     answers.innerHTML = "<p>Something went wrong: " + err.message + "</p>";
   }
 }
 </script>
-
 </body>
 </html>
