@@ -1,71 +1,70 @@
 export default async function handler(req, res) {
-  // 1. Get data from frontend
   const { message, tone } = req.body;
-  const apiKey = process.env.GROQ_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
 
-  // 2. Security & Input Checks
   if (!apiKey) {
-    return res.status(500).json({ reply: "Error: GROQ_API_KEY is missing in Vercel settings." });
+    return res.status(500).json({ reply: "API key missing" });
   }
 
   if (!message || message.trim() === "") {
-    return res.status(400).json({ reply: "Please enter a message to get started." });
+    return res.status(400).json({ reply: "Please enter a message" });
   }
 
   try {
-    // 3. Call Groq API
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "llama3-70b-8192", // Powerful model with high free limits
-        messages: [
-          {
-            role: "system",
-            content: "You are a helpful chat assistant. Give exactly 3 short, natural replies in Roman Urdu. No English, no numbers, no explanations. Each reply on a new line."
-          },
-          {
-            role: "user",
-            content: `Give 3 ${tone || "friendly"} replies for: "${message}"`
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 150
-      })
-    });
+    // Using the 2026 stable preview endpoint
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `Give exactly 3 short ${tone || "friendly"} replies in Roman Urdu to this: "${message}"
+
+Rules:
+- ONLY Roman Urdu (e.g., "Theek hai", "Kya masla hai?")
+- No English words or translations
+- No numbers, bullets, or dashes
+- No introductory text (Do not say "Here are your replies")
+- Each reply on its own new line`
+            }]
+          }]
+        })
+      }
+    );
 
     const data = await response.json();
 
-    // 🛑 Handle Groq Rate Limits (429)
+    // 🛑 Handle the "Quota Exceeded" error gracefully
     if (response.status === 429) {
-      return res.status(429).json({ reply: "Groq is busy. Please wait a few seconds." });
+      return res.status(429).json({ reply: "Limit reached. Please wait 60 seconds." });
     }
 
     if (data.error) {
-      return res.status(500).json({ reply: "Groq Error: " + data.error.message });
+      return res.status(500).json({ reply: "Gemini Error: " + data.error.message });
     }
 
-    // 4. Get the AI text
-    let text = data.choices?.[0]?.message?.content || "AI did not respond.";
+    let text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-    // 🧹 Clean output (removes numbers, bullets, or extra symbols)
+    // 🧠 ADVANCED CLEANING: 
+    // Removes numbers (1.), stars (*), dashes (-), and extra whitespace
     let cleanReplies = text
       .split("\n")
       .map(r => r.replace(/^[0-9.\-\)\s*#]+/, "").trim()) 
       .filter(r => r.length > 2)
       .slice(0, 3);
 
-    // 5. Send back to app
+    // Fallback if the AI returns an empty or weird response
+    if (cleanReplies.length === 0) {
+      return res.status(200).json({ reply: "Koi jawab nahi mila.\nTry again please.\nKuch masla lag raha hai." });
+    }
+
     return res.status(200).json({
       reply: cleanReplies.join("\n")
     });
 
   } catch (error) {
-    return res.status(500).json({
-      reply: "Server error: " + error.message
-    });
+    return res.status(500).json({ reply: "Server error: " + error.message });
   }
 }
