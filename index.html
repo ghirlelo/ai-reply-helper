@@ -1,77 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
- <meta charset="UTF-8">
- <title>AI Reply Helper</title>
- <style>
- body{
- background:#111;
- color:white;
- font-family:Arial;
- text-align:center;
- padding:40px;
- }
- textarea{
- width:300px;
- height:100px;
- padding:10px;
- font-size:16px;
- }
- button{
- padding:10px 20px;
- margin-top:10px;
- cursor:pointer;
- }
- select{
- padding:6px 10px;
- margin-top:10px;
- font-size:14px;
- }
- #answers{
- margin-top:20px;
- }
- p{
- background:#222;
- padding:8px;
- border-radius:5px;
- line-height:1.4;
- }
- </style>
+  <meta charset="UTF-8">
+  <title>AI Reply Helper</title>
+  <style>
+    body{
+      background:#111;
+      color:white;
+      font-family:Arial;
+      text-align:center;
+      padding:40px;
+    }
+    textarea{
+      width:300px;
+      height:100px;
+      padding:10px;
+      font-size:16px;
+    }
+    button{
+      padding:10px 20px;
+      margin-top:10px;
+      cursor:pointer;
+    }
+    select{
+      padding:6px 10px;
+      margin-top:10px;
+      font-size:14px;
+    }
+    #answers{
+      margin-top:20px;
+    }
+    p{
+      background:#222;
+      padding:8px;
+      border-radius:5px;
+      line-height:1.4;
+    }
+  </style>
 </head>
 <body>
+
 <h1>AI Reply Helper</h1>
 <textarea id="message" placeholder="Paste the message here"></textarea>
 <br>
 <select id="tone">
- <option value="friendly">Friendly</option>
- <option value="formal">Formal</option>
- <option value="funny">Funny</option>
+  <option value="friendly">Friendly</option>
+  <option value="formal">Formal</option>
+  <option value="funny">Funny</option>
 </select>
 <br>
 <button onclick="generateReply()">Get Reply Ideas</button>
+
 <div id="answers"></div>
+
 <script>
 async function generateReply() {
- const message = document.getElementById("message").value.trim();
- const tone = document.getElementById("tone")?.value || "friendly";
- const answers = document.getElementById("answers");
- if (!message) {
- answers.innerHTML = "<p>Please enter a message!</p>";
- return;
- }
- answers.innerHTML = "<p>AI is thinking...</p>";
- try {
- const res = await fetch("/api/reply", {
- method: "POST",
- headers: { "Content-Type": "application/json" },
- body: JSON.stringify({ message, tone })
- });
- const data = await res.json();
- answers.innerHTML = "<p>" + data.reply.replace(/\n/g, "<br>") + "</p>";
- } catch (err) {
- answers.innerHTML = "<p>Something went wrong: " + err.message + "</p>";
- }
+  const message = document.getElementById("message").value.trim();
+  const tone = document.getElementById("tone")?.value || "friendly";
+  const answers = document.getElementById("answers");
+
+  if (!message) {
+    answers.innerHTML = "<p>Please enter a message!</p>";
+    return;
+  }
+
+  answers.innerHTML = "<p>AI is thinking...</p>";
+
+  try {
+    const res = await fetch("/api/reply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, tone })
+    });
+
+    const data = await res.json();
+    answers.innerHTML = "<p>" + data.reply.replace(/\n/g, "<br>") + "</p>";
+  } catch (err) {
+    answers.innerHTML = "<p>Something went wrong: " + err.message + "</p>";
+  }
 }
 </script>
+
 </body>
 </html>
