@@ -73,14 +73,21 @@ button#main-btn{
   border:none;
   background:linear-gradient(135deg,#22d3ee,#4ade80);
   color:black;
-  font-weight:500;
+  font-weight:600;
   cursor:pointer;
   transition: 0.2s;
 }
 
-button#main-btn:hover{ filter:brightness(1.1); transform: scale(1.02); }
+/* COOLDOWN STYLE */
+button#main-btn:disabled {
+  opacity: 0.5;
+  filter: grayscale(1);
+  cursor: not-allowed;
+}
 
-#answers{ margin-top:20px; width:100%; }
+button#main-btn:hover:not(:disabled){ filter:brightness(1.1); transform: scale(1.02); }
+
+#answers{ margin-top:20px; width:100%; max-height: 250px; overflow-y: auto; }
 
 .reply-card {
   background:rgba(255,255,255,0.08);
@@ -131,7 +138,7 @@ button#main-btn:hover{ filter:brightness(1.1); transform: scale(1.02); }
 </div>
 
 <script>
-// 3. SERVICE WORKER REGISTRATION (For "Install" button)
+// REGISTER SERVICE WORKER
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
 }
@@ -140,12 +147,16 @@ async function generateReply() {
   const message = document.getElementById("message").value.trim();
   const tone = document.getElementById("tone").value;
   const answers = document.getElementById("answers");
+  const btn = document.getElementById("main-btn");
   
   if (!message) {
     answers.innerHTML = "<div class='reply-card'>Please enter a message!</div>";
     return;
   }
 
+  // START COOLDOWN
+  btn.disabled = true;
+  btn.innerText = "Thinking...";
   answers.innerHTML = "<div class='reply-card'>AI is thinking...</div>";
 
   try {
@@ -156,6 +167,12 @@ async function generateReply() {
     });
 
     const data = await res.json();
+    
+    // Check for Quota Limit (Status 429)
+    if (res.status === 429) {
+        throw new Error("Daily limit reached. Try again in 1 minute.");
+    }
+
     let text = data.reply || data.explanation || "";
 
     const lines = text.split(/(?:\d\.|\n)/).filter(r => r.trim().length > 1).slice(0, 3);
@@ -180,7 +197,14 @@ async function generateReply() {
     if(lines.length === 0 && text) answers.innerHTML = `<div class='reply-card'>${text}</div>`;
 
   } catch (err) {
-    answers.innerHTML = "<div class='reply-card'>Something went wrong: " + err.message + "</div>";
+    // Show a clean error instead of technical code
+    answers.innerHTML = `<div class='reply-card' style='color:#ff4d4d'>${err.message}</div>`;
+  } finally {
+    // END COOLDOWN AFTER 3 SECONDS
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerText = "Get Reply Ideas";
+    }, 3000);
   }
 }
 
@@ -193,7 +217,7 @@ function copyText(text, btn) {
 
 function shareToWA(text) {
   const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-  window.location.href = url; // Better for mobile "app" feel
+  window.location.href = url;
 }
 </script>
 </body>
