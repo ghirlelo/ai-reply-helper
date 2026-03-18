@@ -130,7 +130,10 @@ async function generateReply() {
     answers.innerHTML = "<p>Please enter a message!</p>";
     return;
   }
-
+function shareToWhatsApp(text) {
+  const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
+}
   answers.innerHTML = "<p>AI is thinking...</p>";
 
   try {
