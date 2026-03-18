@@ -10,6 +10,13 @@ export default async function handler(req, res) {
     return res.status(400).json({ reply: "Please enter a message" });
   }
 
+  // ----- Detect language -----
+  const englishLetters = message.replace(/[^A-Za-z]/g, "").length;
+  const totalLetters = message.replace(/[^A-Za-z\u0600-\u06FF]/g, "").length;
+  const isEnglish = englishLetters / (totalLetters || 1) > 0.6; // >60% English letters
+
+  const replyLang = isEnglish ? "English" : "Roman Urdu";
+
   try {
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`,
@@ -23,7 +30,7 @@ export default async function handler(req, res) {
             {
               parts: [
                 {
-                  text: `Give exactly 3 short ${tone || "friendly"} replies in Roman Urdu to this message: "${message}"
+                  text: `Give exactly 3 short ${tone || "friendly"} replies in ${replyLang} to this message: "${message}"
 
 Rules:
 - No explanation
@@ -52,10 +59,10 @@ Rules:
       data?.candidates?.[0]?.content?.parts?.[0]?.text ||
       "AI did not respond.";
 
-    // 🧠 CLEAN OUTPUT (important fix)
+    // Clean output
     let cleanReplies = text
       .split("\n")
-      .map(r => r.replace(/^[0-9.\-\)\s]+/, "").trim()) // remove numbers like "1. "
+      .map(r => r.replace(/^[0-9.\-\)\s]+/, "").trim())
       .filter(r => r !== "")
       .slice(0, 3);
 
