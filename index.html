@@ -77,6 +77,7 @@ button#main-btn{
   transition: 0.2s;
 }
 
+/* Cooldown styling */
 button#main-btn:disabled {
   opacity: 0.5;
   filter: grayscale(1);
@@ -136,7 +137,7 @@ button#main-btn:hover:not(:disabled){ filter:brightness(1.1); transform: scale(1
 </div>
 
 <script>
-// Service Worker Registration
+// Register Service Worker for installation
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
 }
@@ -152,7 +153,7 @@ async function generateReply() {
     return;
   }
 
-  // Start Cooldown
+  // --- Start Cooldown Logic ---
   btn.disabled = true;
   btn.innerText = "Thinking...";
   answers.innerHTML = "<div class='reply-card'>AI is thinking...</div>";
@@ -166,14 +167,14 @@ async function generateReply() {
 
     const data = await res.json();
     
-    // Check for Rate Limit Error
+    // Handle Quota Limit 429 Error cleanly
     if (res.status === 429) {
-        throw new Error("Daily limit reached. Try again in 60s.");
+        throw new Error("Limit reached. Try again in 60s.");
     }
 
     let text = data.reply || data.explanation || "";
 
-    // Split logic
+    // Better splitting logic
     const lines = text.split("\n").filter(r => r.trim().length > 1).slice(0, 3);
 
     answers.innerHTML = "";
@@ -196,9 +197,10 @@ async function generateReply() {
     if(lines.length === 0 && text) answers.innerHTML = `<div class='reply-card'>${text}</div>`;
 
   } catch (err) {
+    // Show user-friendly error
     answers.innerHTML = `<div class='reply-card' style='color:#ff4d4d'>${err.message}</div>`;
   } finally {
-    // End Cooldown after 3 seconds
+    // --- End Cooldown after 3 seconds ---
     setTimeout(() => {
       btn.disabled = false;
       btn.innerText = "Get Reply Ideas";
